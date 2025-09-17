@@ -8,9 +8,8 @@ function App() {
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [decks, setDecks] = useState([]);
-  const [selectedDeck, setSelectedDeck] = useState(null);
-  const [cards, setCards] = useState([]);
-  const [currentCard, setCurrentCard] = useState(0);
+  const [selectedDeck] = useState(null);
+  // Removed unused state variables to clean up warnings
   const [currentLesson, setCurrentLesson] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [userAnswer, setUserAnswer] = useState('');
@@ -44,16 +43,7 @@ function App() {
     }
   };
 
-  const fetchCards = async (deckId) => {
-    try {
-      const response = await fetch(`${API_BASE}/api/decks/${deckId}/cards`);
-      const data = await response.json();
-      setCards(data);
-      setCurrentCard(0);
-    } catch (error) {
-      console.error('Error fetching cards:', error);
-    }
-  };
+  // Removed fetchCards function as it's no longer used
 
   const createUser = async (name) => {
     try {
@@ -70,8 +60,26 @@ function App() {
     }
   };
 
-  const uploadDeck = async (file, deckName) => {
+  const uploadDeck = async (file, deckName, setProgress) => {
+    console.log('🔄 Starting upload for:', deckName);
+
+    const uploadId = Date.now().toString();
+    let eventSource = null;
+
     try {
+      // Start progress tracking with Server-Sent Events
+      eventSource = new EventSource(`${API_BASE}/upload-progress/${uploadId}`);
+
+      eventSource.onmessage = (event) => {
+        const progressData = JSON.parse(event.data);
+        console.log('📊 Progress update:', progressData);
+        setProgress(progressData.progress || 0);
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('❌ Progress stream error:', error);
+      };
+
       const formData = new FormData();
       formData.append('ankiDeck', file);
       formData.append('deckName', deckName);
@@ -80,16 +88,29 @@ function App() {
         method: 'POST',
         body: formData,
       });
-      
+
       if (response.ok) {
-        fetchDecks();
-        alert('Deck uploaded successfully!');
+        const result = await response.json();
+        console.log('✅ Upload successful:', result);
+        fetchDecks(); // Refresh deck list
       } else {
-        alert('Error uploading deck');
+        const errorData = await response.json();
+        console.error('❌ Upload failed:', errorData);
+        setProgress(0); // Reset progress on error
       }
     } catch (error) {
-      console.error('Error uploading deck:', error);
-      alert('Error uploading deck');
+      console.error('❌ Upload error:', error);
+      setProgress(0); // Reset progress on error
+      // Still refresh decks in case upload worked despite error
+      setTimeout(() => {
+        fetchDecks();
+        console.log('🔍 Refreshed deck list - check if upload worked despite error');
+      }, 2000);
+    } finally {
+      // Clean up event source
+      if (eventSource) {
+        eventSource.close();
+      }
     }
   };
 
@@ -101,8 +122,12 @@ function App() {
       
       const response = await fetch(`${API_BASE}/api/decks/${deckId}/lesson?difficulty=${difficulty}&questionTypes=${questionTypes}&count=10${userIdParam}${spacedRepParam}`);
       const lessonData = await response.json();
-      
+
       if (response.ok) {
+        console.log('📚 Lesson data received:', lessonData);
+        console.log('📊 Total questions:', lessonData.totalQuestions);
+        console.log('🔢 Questions array length:', lessonData.questions?.length);
+
         setCurrentLesson(lessonData);
         setCurrentQuestion(0);
         setUserAnswer('');
@@ -232,6 +257,10 @@ function App() {
         <div className="admin-section">
           <h3>Admin: Upload Anki Deck</h3>
           <DeckUpload onUpload={uploadDeck} />
+          <p style={{fontSize: '12px', color: '#666'}}>
+            📝 Large decks take 5-10 minutes to process. Watch browser console for progress.<br/>
+            💡 If upload times out, refresh this page - your deck may still have uploaded successfully!
+          </p>
         </div>
 
         <div className="decks-section">
@@ -244,40 +273,128 @@ function App() {
     );
   };
 
+  // Removed Notification component for simplicity
+
   const DeckUpload = ({ onUpload }) => {
     const [file, setFile] = useState(null);
     const [deckName, setDeckName] = useState('');
+    const [uploading, setUploading] = useState(false);
+    const [progress, setProgress] = useState(0);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
       e.preventDefault();
-      if (file && deckName) {
-        onUpload(file, deckName);
-        setFile(null);
-        setDeckName('');
+      if (file && deckName && !uploading) {
+        setUploading(true);
+        setProgress(0);
+
+        try {
+          await onUpload(file, deckName, setProgress);
+
+          // Reset form after short delay when progress reaches 100%
+          setTimeout(() => {
+            setFile(null);
+            setDeckName('');
+            setUploading(false);
+            setProgress(0);
+            e.target.reset();
+          }, 2000);
+
+        } catch (error) {
+          setUploading(false);
+          setProgress(0);
+          console.error('Upload error:', error);
+        }
       }
     };
 
     return (
-      <form onSubmit={handleSubmit} className="deck-upload">
-        <input
-          type="text"
-          value={deckName}
-          onChange={(e) => setDeckName(e.target.value)}
-          placeholder="Deck name"
-          required
-          dir="ltr"
-          style={{ direction: 'ltr', textAlign: 'left' }}
-        />
-        <input
-          type="file"
-          accept=".apkg"
-          onChange={(e) => setFile(e.target.files[0])}
-          required
-        />
-        <button type="submit">Upload Deck</button>
-      </form>
-    );
-  };
+  <div>
+    <form onSubmit={handleSubmit} className="deck-upload">
+      <input
+        type="text"
+        value={deckName}
+        onChange={(e) => setDeckName(e.target.value)}
+        placeholder="Deck Name"
+        required
+        disabled={uploading}
+        dir="ltr"
+        style={{ direction: 'ltr', textAlign: 'left' }}
+      />
+      <label htmlFor="file-upload" style={{ cursor: 'pointer' }}>
+        {file ? (
+          <div
+            style={{
+              fontSize: '12px',
+              color: '#666',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '4px 8px',
+              backgroundColor: '#f8f9fa',
+              borderRadius: '4px',
+              border: '1px solid #e9ecef',
+              whiteSpace: 'nowrap',
+              marginLeft: '8px',
+            }}
+          >
+            📁 <strong>{file.name}</strong> ({Math.round(file.size / 1024)} KB)
+          </div>
+        ) : (
+          <button type="button">Choose File</button>
+        )}
+      </label>
+      <input
+        id="file-upload"
+        type="file"
+        accept=".apkg"
+        onChange={(e) => setFile(e.target.files[0])}
+        required
+        disabled={uploading}
+        style={{ display: 'none' }}
+      />
+      <button type="submit" disabled={uploading || !file || !deckName}>
+        {uploading ? 'Processing...' : 'Upload Deck'}
+      </button>
+    </form>
+
+    {uploading && (
+      <div style={{ marginTop: '10px' }}>
+        <div
+          style={{
+            width: '100%',
+            height: '20px',
+            backgroundColor: '#e0e0e0',
+            borderRadius: '10px',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${progress}%`,
+              height: '100%',
+              backgroundColor: progress === 100 ? '#4CAF50' : '#2196F3',
+              transition: 'width 0.3s ease',
+              borderRadius: '10px',
+            }}
+          ></div>
+        </div>
+        <div
+          style={{
+            fontSize: '12px',
+            color: '#666',
+            marginTop: '5px',
+            textAlign: 'center',
+          }}
+        >
+          {progress < 95
+            ? '🔄 Processing cards and generating questions...'
+            : progress < 100
+            ? '⚡ Almost done!'
+            : '✅ Upload completed!'}
+        </div>
+      </div>
+    )}
+  </div>
+);
 
   const DeckCard = ({ deck, onStartLesson }) => {
     const [selectedDifficulty, setSelectedDifficulty] = useState('beginner');

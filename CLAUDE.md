@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Polski Spark is a Duolingo-style language learning web application for Polish, designed to run on local networks. It imports Anki deck files (.apkg) and transforms them into interactive learning experiences with multiple question types, difficulty classification, and progress tracking.
 
+**Best Practices:**
+- Keep functions focused on single responsibilities
+- Use ES6 modules with proper imports/exports
+- Preserve DOM structure in manipulations
+- Document complex algorithms
+
 ## Architecture
 
 **Full-Stack Structure:**
@@ -151,3 +157,11 @@ The app implements an enhanced SM-2 algorithm optimized for Polish language lear
 - **Text Direction**: RTL issues in translation inputs are resolved via custom input handling
 - **Performance**: Large Anki decks (10K+ cards) may cause slow classification
 - **Browser Compatibility**: Custom input handling may behave differently across browsers
+
+## TODO (Future Implementation)
+
+**AnkiWeb Compliance Features** (deferred until needed):
+- Add copyright disclaimer to upload interface confirming users own/licensed content
+- Create terms of use for Polski Spark stating personal/educational use only
+- Add content ownership validation in upload flow
+- Implement "no redistribution" policy for processed content

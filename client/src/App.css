@@ -140,11 +140,19 @@ input, textarea {
 }
 
 .deck-upload input[type="file"] {
-  flex: 1;
-  min-width: 200px;
+  flex: 0 0 auto;
+  min-width: auto;
   padding: 0.5rem;
-  background: white;
-  border-radius: 5px;
+  background: transparent;
+  border: none;
+}
+
+.deck-upload input[type="file"]::-webkit-file-upload-button {
+  margin-right: 0;
+}
+
+.deck-upload input[type="file"]::file-selector-button {
+  margin-right: 0;
 }
 
 .deck-upload button {
