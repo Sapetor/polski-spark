@@ -1,0 +1,287 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Learning Session API",
+    "description": "API for managing learning sessions and questions",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/decks/{deckId}/lesson": {
+      "get": {
+        "summary": "Start a new learning session",
+        "description": "Generate questions and start a learning session for a specific deck",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Deck identifier"
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["beginner", "intermediate", "advanced"],
+              "default": "beginner"
+            },
+            "description": "Question difficulty level"
+          },
+          {
+            "name": "questionTypes",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Comma-separated list of question types"
+            },
+            "example": "multiple_choice,fill_blank,translation_pl_en"
+          },
+          {
+            "name": "count",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            },
+            "description": "Number of questions to generate"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "number"
+            },
+            "description": "User identifier for personalized sessions"
+          },
+          {
+            "name": "useSpacedRepetition",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Enable spaced repetition algorithm"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Learning session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sessionId": {
+                      "type": "number",
+                      "description": "Unique session identifier"
+                    },
+                    "totalQuestions": {
+                      "type": "number",
+                      "description": "Number of questions in session"
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Question"
+                      }
+                    }
+                  },
+                  "required": ["sessionId", "totalQuestions", "questions"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/check-answer": {
+      "post": {
+        "summary": "Check user's answer to a question",
+        "description": "Validate answer and provide feedback with spaced repetition tracking",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "question": {
+                    "$ref": "#/components/schemas/Question"
+                  },
+                  "userAnswer": {
+                    "type": "string",
+                    "description": "User's submitted answer"
+                  },
+                  "userId": {
+                    "type": "number",
+                    "description": "User identifier"
+                  },
+                  "cardId": {
+                    "type": "number",
+                    "description": "Source card identifier"
+                  },
+                  "timeTaken": {
+                    "type": "number",
+                    "minimum": 0,
+                    "description": "Time taken to answer in milliseconds"
+                  }
+                },
+                "required": ["question", "userAnswer", "userId", "cardId"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer checked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "correct": {
+                      "type": "boolean",
+                      "description": "Whether the answer was correct"
+                    },
+                    "feedback": {
+                      "type": "string",
+                      "description": "Explanation or feedback message"
+                    },
+                    "correctAnswer": {
+                      "type": "string",
+                      "description": "The correct answer if user was wrong"
+                    },
+                    "spacedRepetition": {
+                      "type": "object",
+                      "properties": {
+                        "masteryLevel": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 5,
+                          "description": "Current mastery level for this card"
+                        },
+                        "nextReview": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When to review this card next"
+                        },
+                        "interval": {
+                          "type": "number",
+                          "description": "Days until next review"
+                        }
+                      }
+                    }
+                  },
+                  "required": ["correct", "feedback"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Question": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique question identifier"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["multiple_choice", "fill_blank", "translation_pl_en", "translation_en_pl", "flashcard"],
+            "description": "Question format type"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": ["beginner", "intermediate", "advanced"],
+            "description": "Question difficulty level"
+          },
+          "question": {
+            "type": "string",
+            "description": "The question text displayed to user"
+          },
+          "answer": {
+            "type": "string",
+            "description": "Correct answer for validation"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Multiple choice options (if applicable)"
+          },
+          "hint": {
+            "type": "string",
+            "description": "Optional hint text"
+          },
+          "sourceText": {
+            "type": "string",
+            "description": "Source text for translation questions"
+          },
+          "targetLanguage": {
+            "type": "string",
+            "description": "Target language for translation"
+          },
+          "cardId": {
+            "type": "number",
+            "description": "Source card identifier"
+          }
+        },
+        "required": ["id", "type", "difficulty", "question", "answer", "cardId"]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code for client handling"
+          }
+        },
+        "required": ["error"]
+      }
+    }
+  }
+}

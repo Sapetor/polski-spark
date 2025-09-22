@@ -1,0 +1,298 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "User and Deck Management API",
+    "description": "API for managing users and viewing deck information",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/users": {
+      "get": {
+        "summary": "Get all users",
+        "description": "Retrieve list of all user profiles",
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create new user",
+        "description": "Create a new user profile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1,
+                    "description": "User display name"
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userId}": {
+      "get": {
+        "summary": "Get user by ID",
+        "description": "Retrieve specific user profile",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "User identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/decks": {
+      "get": {
+        "summary": "Get all decks",
+        "description": "Retrieve list of all available decks",
+        "responses": {
+          "200": {
+            "description": "Decks retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Deck"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/decks/{deckId}": {
+      "get": {
+        "summary": "Get deck by ID",
+        "description": "Retrieve specific deck information",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Deck identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deck retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Deck"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete deck",
+        "description": "Remove deck and all associated data",
+        "parameters": [
+          {
+            "name": "deckId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Deck identifier"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deck deleted successfully"
+          },
+          "404": {
+            "description": "Deck not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique user identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "User display name"
+          },
+          "level": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Current learning level"
+          },
+          "xp": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Experience points earned"
+          },
+          "streak": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Consecutive days of study"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Account creation timestamp"
+          },
+          "lastActiveAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last session timestamp"
+          }
+        },
+        "required": ["id", "name", "level", "xp", "streak", "createdAt"]
+      },
+      "Deck": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "Unique deck identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Deck name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Deck description"
+          },
+          "cardCount": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Number of cards in deck"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Upload timestamp"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["processing", "ready", "error"],
+            "description": "Deck processing status"
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error details if status is error"
+          }
+        },
+        "required": ["id", "name", "cardCount", "uploadedAt", "status"]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "description": "Error code for client handling"
+          }
+        },
+        "required": ["error"]
+      }
+    }
+  }
+}

@@ -1,0 +1,166 @@
+openapi: 3.0.0
+info:
+  title: Anki Import API
+  version: 1.0.0
+  description: Enhanced Anki deck upload and import functionality
+
+paths:
+  /api/upload-anki:
+    post:
+      summary: Upload and import Anki deck file
+      description: Enhanced endpoint to upload .apkg file with validation and import tracking
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                ankiFile:
+                  type: string
+                  format: binary
+                  description: Anki deck file (.apkg format)
+                deckName:
+                  type: string
+                  maxLength: 100
+                  description: Custom name for imported deck (optional)
+                validateOnly:
+                  type: boolean
+                  description: Only validate file without importing (optional)
+              required:
+                - ankiFile
+      responses:
+        200:
+          description: Import successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deckId:
+                    type: integer
+                    description: ID of created deck
+                  importStats:
+                    type: object
+                    properties:
+                      cardsImported:
+                        type: integer
+                      cardsSkipped:
+                        type: integer
+                      processingTime:
+                        type: number
+                        description: Time in seconds
+                      warnings:
+                        type: array
+                        items:
+                          type: string
+        400:
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  error:
+                    type: string
+                    description: Error message
+                  details:
+                    type: array
+                    items:
+                      type: string
+                    description: Detailed validation errors
+        413:
+          description: File too large
+        422:
+          description: Invalid file format
+        500:
+          description: Import processing error
+
+  /api/anki-imports:
+    get:
+      summary: Get import history
+      description: Retrieve list of previous Anki imports
+      responses:
+        200:
+          description: Import history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    filename:
+                      type: string
+                    fileSize:
+                      type: integer
+                    cardsImported:
+                      type: integer
+                    importDate:
+                      type: string
+                      format: date-time
+                    status:
+                      type: string
+                      enum: [completed, error, processing]
+
+  /api/anki-imports/{importId}:
+    get:
+      summary: Get detailed import information
+      description: Retrieve detailed information about specific import
+      parameters:
+        - name: importId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Import details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  filename:
+                    type: string
+                  importStats:
+                    type: object
+                    properties:
+                      cardsImported:
+                        type: integer
+                      cardsSkipped:
+                        type: integer
+                      errors:
+                        type: array
+                        items:
+                          type: string
+                  deckId:
+                    type: integer
+                    description: ID of created deck
+        404:
+          description: Import not found
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
