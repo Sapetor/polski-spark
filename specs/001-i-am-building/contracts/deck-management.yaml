@@ -1,0 +1,168 @@
+openapi: 3.0.0
+info:
+  title: Enhanced Deck Management API
+  version: 1.0.0
+  description: Extended deck management with Anki metadata support
+
+paths:
+  /api/decks/{deckId}:
+    get:
+      summary: Get deck details with Anki metadata
+      description: Enhanced endpoint including Anki import information
+      parameters:
+        - name: deckId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deck details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  name:
+                    type: string
+                  description:
+                    type: string
+                  cardCount:
+                    type: integer
+                  ankiMetadata:
+                    type: object
+                    nullable: true
+                    properties:
+                      originalDeckId:
+                        type: string
+                      version:
+                        type: string
+                      importDate:
+                        type: string
+                        format: date-time
+                      originalFilename:
+                        type: string
+                      tags:
+                        type: array
+                        items:
+                          type: string
+
+    delete:
+      summary: Delete deck with Anki cleanup
+      description: Delete deck and associated Anki import records
+      parameters:
+        - name: deckId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Deck deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        404:
+          description: Deck not found
+        409:
+          description: Cannot delete deck with active user progress
+
+  /api/decks/{deckId}/cards:
+    get:
+      summary: Get cards with Anki metadata
+      description: Enhanced cards endpoint with original Anki information
+      parameters:
+        - name: deckId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: includeAnkiData
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include original Anki fields and tags
+      responses:
+        200:
+          description: Deck cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    front:
+                      type: string
+                    back:
+                      type: string
+                    difficulty:
+                      type: string
+                      enum: [beginner, intermediate, advanced]
+                    ankiData:
+                      type: object
+                      nullable: true
+                      properties:
+                        noteId:
+                          type: string
+                        model:
+                          type: string
+                        originalFields:
+                          type: object
+                        tags:
+                          type: array
+                          items:
+                            type: string
+                        mediaFiles:
+                          type: array
+                          items:
+                            type: string
+
+  /api/decks/{deckId}/export:
+    post:
+      summary: Export deck back to Anki format
+      description: Export processed deck back to .apkg format
+      parameters:
+        - name: deckId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                includeProgress:
+                  type: boolean
+                  default: false
+                  description: Include user progress as Anki scheduling data
+      responses:
+        200:
+          description: Exported file
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="exported-deck.apkg"
+        404:
+          description: Deck not found

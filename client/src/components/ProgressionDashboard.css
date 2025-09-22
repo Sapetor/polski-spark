@@ -1,0 +1,255 @@
+/* ProgressionDashboard.css */
+.progression-dashboard {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+}
+
+.progression-dashboard.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  font-size: 18px;
+  color: #666;
+}
+
+.progression-dashboard.error {
+  border: 2px solid #e74c3c;
+  background: #fdf2f2;
+}
+
+.error-message h3 {
+  color: #e74c3c;
+  margin: 0 0 8px 0;
+}
+
+.error-message p {
+  color: #666;
+  margin: 0;
+}
+
+.progression-dashboard.no-data {
+  text-align: center;
+  border: 2px dashed #ddd;
+  background: #f9f9f9;
+}
+
+.no-data-message h3 {
+  color: #3498db;
+  margin: 0 0 8px 0;
+}
+
+.no-data-message p {
+  color: #666;
+  margin: 0;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 16px;
+}
+
+.dashboard-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+}
+
+.dashboard-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #3498db;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.progression-overview {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.dashboard-level,
+.dashboard-xp,
+.dashboard-streak {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.progression-details {
+  border-top: 1px solid #eee;
+  padding-top: 24px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h3 {
+  margin: 0 0 12px 0;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.difficulty-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.difficulty-bar {
+  flex: 1;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.difficulty-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2ecc71, #f39c12, #e74c3c);
+  transition: width 0.3s ease;
+}
+
+.difficulty-value {
+  font-weight: bold;
+  color: #2c3e50;
+  min-width: 60px;
+}
+
+.difficulty-range {
+  font-size: 14px;
+  color: #666;
+}
+
+.session-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.session-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f0f0f0;
+  border-radius: 6px;
+}
+
+.session-stat .stat-label {
+  font-size: 14px;
+  color: #666;
+}
+
+.session-stat .stat-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.next-level-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #e8f4fd;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+}
+
+.xp-needed {
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+.level-preview {
+  font-size: 18px;
+  font-weight: bold;
+  color: #3498db;
+}
+
+.detail-section.max-level {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.detail-section.max-level h3 {
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+}
+
+.detail-section.max-level p {
+  color: #2c3e50;
+  margin: 0;
+  font-size: 16px;
+}
+
+.dashboard-footer {
+  border-top: 1px solid #eee;
+  padding-top: 16px;
+  text-align: center;
+}
+
+.last-session {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .progression-dashboard {
+    padding: 16px;
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .dashboard-stats {
+    gap: 16px;
+  }
+
+  .session-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .next-level-info {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}

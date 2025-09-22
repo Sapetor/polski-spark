@@ -1,0 +1,176 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Deck Upload API",
+    "description": "API for uploading and managing Anki deck files",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/upload-anki": {
+      "post": {
+        "summary": "Upload Anki deck file",
+        "description": "Upload a .apkg file and process it into the learning system",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ankiDeck": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The .apkg file to upload"
+                  },
+                  "deckName": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "User-provided name for the deck"
+                  }
+                },
+                "required": ["ankiDeck", "deckName"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number",
+                      "description": "Unique deck identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Deck name"
+                    },
+                    "cardCount": {
+                      "type": "number",
+                      "description": "Number of cards processed"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["ready"],
+                      "description": "Processing status"
+                    }
+                  },
+                  "required": ["id", "name", "cardCount", "status"]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Error description"
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": ["INVALID_FILE", "INVALID_NAME", "FILE_TOO_LARGE"]
+                    }
+                  },
+                  "required": ["error", "code"]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "File processing failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Processing error description"
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": ["CORRUPT_FILE", "UNSUPPORTED_FORMAT", "NO_CARDS_FOUND"]
+                    }
+                  },
+                  "required": ["error", "code"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Internal server error"
+                    }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload-progress/{uploadId}": {
+      "get": {
+        "summary": "Get upload progress via Server-Sent Events",
+        "description": "Stream real-time progress updates for deck processing",
+        "parameters": [
+          {
+            "name": "uploadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Unique upload session identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progress event stream",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "progress": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Completion percentage"
+                    },
+                    "stage": {
+                      "type": "string",
+                      "enum": ["uploading", "extracting", "parsing", "generating", "complete"],
+                      "description": "Current processing stage"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Human-readable progress message"
+                    }
+                  },
+                  "required": ["progress"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
