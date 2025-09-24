@@ -385,17 +385,48 @@ function checkTranslationAnswer(userAnswer, correctAnswer) {
   const correctClean = correctNormalized.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 
   if (userClean === correctClean) return true;
-  
-  // Check if user answer contains all major words from correct answer
+
+  // Split correct answer by common delimiters to get multiple possible translations
+  const possibleAnswers = correctAnswer.split(/[;,\/|]/).map(answer => answer.trim().toLowerCase());
+
+  // Check if user answer matches any of the possible translations
+  for (const possibleAnswer of possibleAnswers) {
+    if (userAnswer === possibleAnswer) return true;
+
+    const possibleNormalized = normalizePolishCharacters(possibleAnswer);
+    if (userNormalized === possibleNormalized) return true;
+
+    const possibleClean = possibleNormalized.replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+    if (userClean === possibleClean) return true;
+
+    // Check if user answer contains the main content of this possible answer
+    const userWords = new Set(userClean.split(/\s+/));
+    const possibleWords = possibleClean.split(/\s+/);
+    const majorPossibleWords = possibleWords.filter(word => word.length > 2);
+
+    if (majorPossibleWords.length > 0) {
+      const matchedWords = majorPossibleWords.filter(word => userWords.has(word));
+      // For single word translations, require exact match
+      // For multi-word translations, allow partial match if it's substantial
+      if (majorPossibleWords.length === 1) {
+        if (matchedWords.length === 1) return true;
+      } else {
+        if (matchedWords.length / majorPossibleWords.length >= 0.6) return true; // 60% threshold for multi-word
+      }
+    }
+  }
+
+  // Fallback: Check if user answer contains major words from the full correct answer
   const userWords = new Set(userClean.split(/\s+/));
   const correctWords = correctClean.split(/\s+/);
   const majorCorrectWords = correctWords.filter(word => word.length > 2);
-  
+
   if (majorCorrectWords.length > 0) {
     const matchedMajorWords = majorCorrectWords.filter(word => userWords.has(word));
-    return matchedMajorWords.length / majorCorrectWords.length >= 0.8; // 80% of major words match
+    // More lenient threshold for partial matching
+    return matchedMajorWords.length / majorCorrectWords.length >= 0.5; // 50% of major words match
   }
-  
+
   return false;
 }
 

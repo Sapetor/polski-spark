@@ -7,6 +7,8 @@ import ReviewWords from './components/ReviewWords';
 import RandomQuiz from './components/RandomQuiz';
 import GrammarPractice from './components/GrammarPractice';
 import GrammarLessons from './components/GrammarLessons';
+import PronunciationPractice from './components/PronunciationPractice';
+import ListeningPractice from './components/ListeningPractice';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
 import { SkeletonUserProfile, SkeletonDeck } from './components/Skeleton';
@@ -607,36 +609,104 @@ function App() {
 
         {/* Main Content Grid */}
         <div className="dashboard-main">
-          {/* Primary Learning Section */}
-          <div className="learning-hub">
+          {/* Primary Learning Modes - Most Visible */}
+          <div className="learning-modes-hub">
             <div className="section-header">
-              <h2>🎯 Start Learning</h2>
-              <p className="section-subtitle">Choose your deck and dive in</p>
+              <h2>🚀 Choose Your Learning Mode</h2>
+              <p className="section-subtitle">Jump right into practice - no scrolling needed!</p>
             </div>
 
-            {isLoadingDecks ? (
-              <div className="loading-decks">
-                {Array.from({ length: 2 }, (_, i) => <SkeletonDeck key={i} />)}
+            <div className="learning-modes-grid">
+              {/* Deck-based Learning */}
+              <div className="mode-category">
+                <h3 className="category-title">📚 Deck Learning</h3>
+                <div className="mode-cards-row">
+                  {isLoadingDecks ? (
+                    <div className="loading-decks-compact">
+                      {Array.from({ length: 2 }, (_, i) => <SkeletonDeck key={i} />)}
+                    </div>
+                  ) : decks.length === 0 ? (
+                    <div className="empty-deck-card">
+                      <div className="empty-icon">📚</div>
+                      <h4>No decks yet</h4>
+                      <button onClick={() => setShowUploadModal(true)} className="upload-btn-compact">
+                        📁 Upload Deck
+                      </button>
+                    </div>
+                  ) : (
+                    decks.slice(0, 2).map(deck => (
+                      <DeckCardCompact key={deck.id} deck={deck} onStartLesson={startLesson} />
+                    ))
+                  )}
+                </div>
               </div>
-            ) : decks.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">📚</div>
-                <h3>No decks available</h3>
-                <p>Upload an Anki deck to get started with your learning journey!</p>
-                <button
-                  onClick={() => setShowUploadModal(true)}
-                  className="cta-button"
-                >
-                  📁 Upload Your First Deck
-                </button>
+
+              {/* Quick Practice Modes */}
+              <div className="mode-category">
+                <h3 className="category-title">⚡ Quick Practice</h3>
+                <div className="mode-cards-row">
+                  <button className="mode-card review" onClick={() => setCurrentView('reviewWords')}>
+                    <div className="mode-icon">📖</div>
+                    <div className="mode-info">
+                      <h4>Review Words</h4>
+                      <p>Yesterday's vocabulary</p>
+                    </div>
+                  </button>
+
+                  <button className="mode-card quiz" onClick={() => setCurrentView('randomQuiz')}>
+                    <div className="mode-icon">🎲</div>
+                    <div className="mode-info">
+                      <h4>Random Quiz</h4>
+                      <p>Test your knowledge</p>
+                    </div>
+                  </button>
+                </div>
               </div>
-            ) : (
-              <div className="decks-showcase">
-                {decks.map(deck => (
-                  <DeckCard key={deck.id} deck={deck} onStartLesson={startLesson} />
-                ))}
+
+              {/* Audio Practice Modes */}
+              <div className="mode-category">
+                <h3 className="category-title">🎤 Audio Practice</h3>
+                <div className="mode-cards-row">
+                  <button className="mode-card pronunciation" onClick={() => setCurrentView('pronunciationPractice')}>
+                    <div className="mode-icon">🎤</div>
+                    <div className="mode-info">
+                      <h4>Pronunciation</h4>
+                      <p>Perfect your accent</p>
+                    </div>
+                  </button>
+
+                  <button className="mode-card listening" onClick={() => setCurrentView('listeningPractice')}>
+                    <div className="mode-icon">👂</div>
+                    <div className="mode-info">
+                      <h4>Listening</h4>
+                      <p>Comprehension skills</p>
+                    </div>
+                  </button>
+                </div>
               </div>
-            )}
+
+              {/* Grammar Learning */}
+              <div className="mode-category">
+                <h3 className="category-title">📖 Grammar</h3>
+                <div className="mode-cards-row">
+                  <button className="mode-card grammar-lessons" onClick={() => setCurrentView('grammarLessons')}>
+                    <div className="mode-icon">📚</div>
+                    <div className="mode-info">
+                      <h4>Grammar Lessons</h4>
+                      <p>Learn Polish rules</p>
+                    </div>
+                  </button>
+
+                  <button className="mode-card grammar-practice" onClick={() => setCurrentView('grammarPractice')}>
+                    <div className="mode-icon">✏️</div>
+                    <div className="mode-info">
+                      <h4>Grammar Practice</h4>
+                      <p>Apply what you learned</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Analytics Dashboard */}
@@ -685,51 +755,6 @@ function App() {
             </div>
           </div>
 
-          {/* Quick Actions Panel */}
-          <div className="actions-hub">
-            <div className="section-header">
-              <h2>⚡ Quick Practice</h2>
-              <p className="section-subtitle">Focused learning activities</p>
-            </div>
-
-            <div className="quick-actions-new">
-              <button className="action-card review" onClick={() => setCurrentView('reviewWords')}>
-                <div className="action-icon-new">📖</div>
-                <div className="action-content">
-                  <h4>Review Words</h4>
-                  <p>Practice yesterday's vocabulary</p>
-                </div>
-                <div className="action-arrow">→</div>
-              </button>
-
-              <button className="action-card quiz" onClick={() => setCurrentView('randomQuiz')}>
-                <div className="action-icon-new">🎲</div>
-                <div className="action-content">
-                  <h4>Random Quiz</h4>
-                  <p>Test your knowledge</p>
-                </div>
-                <div className="action-arrow">→</div>
-              </button>
-
-              <button className="action-card grammar" onClick={() => setCurrentView('grammarLessons')}>
-                <div className="action-icon-new">📚</div>
-                <div className="action-content">
-                  <h4>Grammar Lessons</h4>
-                  <p>Learn Polish grammar rules</p>
-                </div>
-                <div className="action-arrow">→</div>
-              </button>
-
-              <button className="action-card pronunciation" onClick={() => showWarning('Pronunciation practice coming soon!')}>
-                <div className="action-icon-new">🗣️</div>
-                <div className="action-content">
-                  <h4>Pronunciation</h4>
-                  <p>Perfect your accent</p>
-                </div>
-                <div className="action-arrow">→</div>
-              </button>
-            </div>
-          </div>
 
           {/* Achievements & Recommendations */}
           <div className="achievements-hub">
@@ -1013,7 +1038,25 @@ function App() {
     );
   };
 
+  // Compact deck card for the new learning modes layout
+  const DeckCardCompact = ({ deck, onStartLesson }) => {
+    const handleQuickStart = () => {
+      // Default settings for quick access
+      onStartLesson(deck.id, 'beginner', 'multiple_choice,fill_blank', true, 10, 'lesson');
+    };
 
+    return (
+      <div className="deck-card-compact">
+        <div className="deck-info">
+          <h4 className="deck-name">{deck.name}</h4>
+          <p className="deck-stats">{deck.card_count || 0} cards</p>
+        </div>
+        <button className="quick-start-btn" onClick={handleQuickStart}>
+          Start Learning →
+        </button>
+      </div>
+    );
+  };
 
   const LessonComplete = () => {
     const accuracy = sessionStats.total > 0 ? Math.round((sessionStats.correct / sessionStats.total) * 100) : 0;
@@ -1203,6 +1246,42 @@ function App() {
             <GrammarLessons
               onBackToDashboard={() => setCurrentView('dashboard')}
               onStartPractice={startGrammarPracticeFromLesson}
+            />
+          </ErrorBoundary>
+        );
+      case 'pronunciationPractice':
+        return (
+          <ErrorBoundary fallback={({ error, resetError }) => (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <h2>Error loading pronunciation practice</h2>
+              <p>There was an error loading the pronunciation practice feature.</p>
+              <button onClick={() => { resetError(); setCurrentView('dashboard'); }} style={{ marginRight: '10px' }}>Back to Dashboard</button>
+              <button onClick={resetError} style={{ marginRight: '10px' }}>Try Again</button>
+              <button onClick={() => window.location.reload()}>Refresh Page</button>
+            </div>
+          )}>
+            <PronunciationPractice
+              currentUser={currentUser}
+              onBackToDashboard={() => setCurrentView('dashboard')}
+              onError={showError}
+            />
+          </ErrorBoundary>
+        );
+      case 'listeningPractice':
+        return (
+          <ErrorBoundary fallback={({ error, resetError }) => (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <h2>Error loading listening practice</h2>
+              <p>There was an error loading the listening practice feature.</p>
+              <button onClick={() => { resetError(); setCurrentView('dashboard'); }} style={{ marginRight: '10px' }}>Back to Dashboard</button>
+              <button onClick={resetError} style={{ marginRight: '10px' }}>Try Again</button>
+              <button onClick={() => window.location.reload()}>Refresh Page</button>
+            </div>
+          )}>
+            <ListeningPractice
+              currentUser={currentUser}
+              onBackToDashboard={() => setCurrentView('dashboard')}
+              onError={showError}
             />
           </ErrorBoundary>
         );

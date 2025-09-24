@@ -4,6 +4,7 @@ import FillBlankQuestion from './questions/FillBlankQuestion';
 import TranslationQuestion from './questions/TranslationQuestion';
 import FlashcardQuestion from './questions/FlashcardQuestion';
 import WordOrderQuestion from './questions/WordOrderQuestion';
+import PronunciationQuestion from './questions/PronunciationQuestion';
 
 const QuestionRenderer = React.memo(({
   question,
@@ -47,6 +48,15 @@ const QuestionRenderer = React.memo(({
       case 'word_order':
         return (
           <WordOrderQuestion
+            question={question}
+            onSubmit={handleSubmit}
+            disabled={showResult || disabled}
+          />
+        );
+
+      case 'pronunciation':
+        return (
+          <PronunciationQuestion
             question={question}
             onSubmit={handleSubmit}
             disabled={showResult || disabled}

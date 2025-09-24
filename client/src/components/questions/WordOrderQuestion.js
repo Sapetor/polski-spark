@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const WordOrderQuestion = ({ question, onSubmit, disabled }) => {
   const [orderedWords, setOrderedWords] = useState([]);
   const [availableWords, setAvailableWords] = useState([...question.scrambledWords]);
+
+  // Reset state when question changes
+  useEffect(() => {
+    setOrderedWords([]);
+    setAvailableWords([...question.scrambledWords]);
+  }, [question]);
 
   const addWord = (word, index) => {
     if (disabled) return;

@@ -6,6 +6,7 @@ server/node_modules/
 # Production builds
 client/build/
 dist/
+specs/
 
 # Environment variables
 .env
@@ -37,6 +38,7 @@ Thumbs.db
 
 # Claude Code cache
 .claude/
+.specify/
 
 # Other tools
 .serena/

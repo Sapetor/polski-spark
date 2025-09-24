@@ -893,9 +893,25 @@ app.post('/api/users/:userId/grammar-practice', async (req, res) => {
     const questions = [];
     const grammarRules = getGrammarRules(difficulty);
 
-    for (let i = 0; i < parseInt(count); i++) {
-      const topic = grammarTopics[Math.floor(Math.random() * grammarTopics.length)];
-      const rule = grammarRules[topic][Math.floor(Math.random() * grammarRules[topic].length)];
+    // Create pool of all possible topic+rule combinations
+    const topicRuleCombinations = [];
+    grammarTopics.forEach(topic => {
+      grammarRules[topic].forEach(rule => {
+        topicRuleCombinations.push({ topic, rule });
+      });
+    });
+
+    // Shuffle the combinations to ensure randomness
+    for (let i = topicRuleCombinations.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [topicRuleCombinations[i], topicRuleCombinations[j]] = [topicRuleCombinations[j], topicRuleCombinations[i]];
+    }
+
+    // Use unique combinations up to the requested count
+    const questionsToGenerate = Math.min(parseInt(count), topicRuleCombinations.length);
+
+    for (let i = 0; i < questionsToGenerate; i++) {
+      const { topic, rule } = topicRuleCombinations[i];
 
       // Use some vocabulary in the exercise
       const words = vocabularyCards.slice(i * 2, (i * 2) + 4).map(card => ({
@@ -1555,6 +1571,267 @@ function generateConditionalQuestion(rule, words) {
       translation: request.english
     };
   }
+}
+
+// Audio Practice API Endpoints
+
+// Get pronunciation words for a user
+app.get('/api/users/:userId/pronunciation-words', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit = 20, difficulty } = req.query;
+
+    // Get cards that the user has studied for pronunciation practice
+    let query = db('cards')
+      .join('user_progress', 'cards.id', 'user_progress.card_id')
+      .where('user_progress.user_id', userId)
+      .where('user_progress.mastery_level', '>', 0) // Only words they've encountered
+      .select(
+        'cards.id',
+        'cards.front as polish',
+        'cards.back as english',
+        'cards.difficulty_level',
+        'user_progress.mastery_level',
+        'user_progress.last_reviewed'
+      )
+      .orderBy('user_progress.last_reviewed', 'desc')
+      .limit(parseInt(limit));
+
+    if (difficulty) {
+      query = query.where('cards.difficulty_level', difficulty);
+    }
+
+    const words = await query;
+
+    // Add pronunciation guides for common Polish sounds
+    const enhancedWords = words.map(word => ({
+      ...word,
+      pronunciation: generatePronunciationGuide(word.polish),
+      notes: getPronunciationNotes(word.polish)
+    }));
+
+    res.json({
+      words: enhancedWords,
+      total: enhancedWords.length,
+      practiceType: 'pronunciation'
+    });
+  } catch (error) {
+    console.error('Error fetching pronunciation words:', error);
+    res.status(500).json({ error: 'Failed to fetch pronunciation words' });
+  }
+});
+
+// Get listening exercises for a user
+app.get('/api/users/:userId/listening-exercises', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { limit = 15, difficulty } = req.query;
+
+    // Get cards for listening practice
+    let query = db('cards')
+      .join('user_progress', 'cards.id', 'user_progress.card_id')
+      .where('user_progress.user_id', userId)
+      .where('user_progress.mastery_level', '>', 0) // Only words they've encountered
+      .select(
+        'cards.id',
+        'cards.front as polish',
+        'cards.back as english',
+        'cards.difficulty_level',
+        'user_progress.mastery_level'
+      )
+      .orderBy(db.raw('RANDOM()')) // Random order for listening practice
+      .limit(parseInt(limit));
+
+    if (difficulty) {
+      query = query.where('cards.difficulty_level', difficulty);
+    }
+
+    const cards = await query;
+
+    // Create listening exercises
+    const exercises = cards.map(card => ({
+      id: card.id,
+      polish: card.polish,
+      english: card.english,
+      difficulty: card.difficulty_level,
+      notes: getListeningNotes(card.polish, card.english)
+    }));
+
+    res.json({
+      exercises,
+      total: exercises.length,
+      practiceType: 'listening'
+    });
+  } catch (error) {
+    console.error('Error fetching listening exercises:', error);
+    res.status(500).json({ error: 'Failed to fetch listening exercises' });
+  }
+});
+
+// Save pronunciation practice result
+app.post('/api/users/:userId/pronunciation-result', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { cardId, score, similarity, recorded, recognized } = req.body;
+
+    // Save the pronunciation practice result
+    await db('exercise_results').insert({
+      user_id: userId,
+      card_id: cardId,
+      exercise_type: 'pronunciation',
+      is_correct: score >= 70, // 70% threshold for correct
+      response_time: 0, // Audio exercises don't have traditional response time
+      metadata: JSON.stringify({
+        score,
+        similarity,
+        recorded,
+        recognized,
+        practice_type: 'pronunciation'
+      }),
+      created_at: new Date()
+    });
+
+    // Update user progress if this was a good pronunciation
+    if (score >= 80) {
+      await db('user_progress')
+        .where('user_id', userId)
+        .where('card_id', cardId)
+        .increment('streak', 1)
+        .update({
+          last_reviewed: new Date(),
+          next_review: calculateNextReview(score >= 90 ? 'hard' : 'good')
+        });
+    }
+
+    res.json({
+      success: true,
+      message: 'Pronunciation result saved',
+      score
+    });
+  } catch (error) {
+    console.error('Error saving pronunciation result:', error);
+    res.status(500).json({ error: 'Failed to save pronunciation result' });
+  }
+});
+
+// Save listening practice result
+app.post('/api/users/:userId/listening-result', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { cardId, userAnswer, correctAnswer, isCorrect, responseTime } = req.body;
+
+    // Save the listening practice result
+    await db('exercise_results').insert({
+      user_id: userId,
+      card_id: cardId,
+      exercise_type: 'listening',
+      is_correct: isCorrect,
+      response_time: responseTime || 0,
+      metadata: JSON.stringify({
+        userAnswer,
+        correctAnswer,
+        practice_type: 'listening'
+      }),
+      created_at: new Date()
+    });
+
+    // Update user progress for correct answers
+    if (isCorrect) {
+      await db('user_progress')
+        .where('user_id', userId)
+        .where('card_id', cardId)
+        .increment('streak', 1)
+        .update({
+          last_reviewed: new Date(),
+          next_review: calculateNextReview('good')
+        });
+    }
+
+    res.json({
+      success: true,
+      message: 'Listening result saved',
+      isCorrect
+    });
+  } catch (error) {
+    console.error('Error saving listening result:', error);
+    res.status(500).json({ error: 'Failed to save listening result' });
+  }
+});
+
+// Helper functions for audio practice
+
+function generatePronunciationGuide(polishWord) {
+  // Simple pronunciation guide mapping for Polish sounds
+  const pronunciationMap = {
+    'ą': 'on/om',
+    'ę': 'en/em',
+    'ć': 'ch',
+    'ń': 'ny',
+    'ł': 'w',
+    'ś': 'sh',
+    'ź': 'zh',
+    'ż': 'zh',
+    'sz': 'sh',
+    'cz': 'ch',
+    'rz': 'zh',
+    'dz': 'dz',
+    'dź': 'dzh',
+    'dż': 'dzh'
+  };
+
+  let guide = polishWord.toLowerCase();
+
+  // Replace special Polish characters with pronunciation guides
+  Object.entries(pronunciationMap).forEach(([polish, english]) => {
+    guide = guide.replace(new RegExp(polish, 'g'), english);
+  });
+
+  return guide;
+}
+
+function getPronunciationNotes(polishWord) {
+  const notes = [];
+
+  if (polishWord.includes('ą')) {
+    notes.push('ą sounds like "on" or "om"');
+  }
+  if (polishWord.includes('ę')) {
+    notes.push('ę sounds like "en" or "em"');
+  }
+  if (polishWord.includes('ł')) {
+    notes.push('ł sounds like English "w"');
+  }
+  if (polishWord.includes('rz') || polishWord.includes('ż')) {
+    notes.push('rz/ż sounds like "zh" in "measure"');
+  }
+  if (polishWord.includes('sz')) {
+    notes.push('sz sounds like "sh" in "shop"');
+  }
+  if (polishWord.includes('cz')) {
+    notes.push('cz sounds like "ch" in "church"');
+  }
+
+  return notes.length > 0 ? notes.join('; ') : null;
+}
+
+function getListeningNotes(polishWord, englishWord) {
+  const notes = [];
+
+  // Add notes about Polish stress patterns
+  if (polishWord.length > 2) {
+    notes.push('Polish stress is usually on the second-to-last syllable');
+  }
+
+  // Add notes about specific sounds
+  if (polishWord.includes('ą') || polishWord.includes('ę')) {
+    notes.push('Listen for nasal vowel sounds');
+  }
+
+  if (polishWord.includes('rz') || polishWord.includes('sz') || polishWord.includes('cz')) {
+    notes.push('Pay attention to Polish consonant clusters');
+  }
+
+  return notes.length > 0 ? notes.join('; ') : null;
 }
 
 // Get user learning statistics

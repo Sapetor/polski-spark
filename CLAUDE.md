@@ -11,9 +11,12 @@ Polski Spark is a modern language learning application for Polish, built with Re
 - **🎲 Random Quiz**: Smart quiz generation from all learned vocabulary
 - **📚 Grammar Lessons**: Comprehensive explanations of Polish grammar concepts
 - **📝 Grammar Practice**: Polish sentence structure, cases, and verb conjugation exercises
-- **<� Dashboard Redesign**: Complete UI overhaul with modern glassmorphism design and CSS Grid layout
-- **=� Modal Upload System**: Converted deck upload to prominent modal dialog
-- **<� Enhanced UX**: Improved accessibility, visual hierarchy, and responsive design
+- **🎧 Listening Practice**: Audio-based comprehension exercises with Polish character tolerance
+- **🔧 Translation Improvements**: Fixed duplicate questions in grammar lessons and multiple answer acceptance
+- **🎨 UI Polish**: Optimized mode card heights and improved contrast in grammar lessons
+- **🏠 Dashboard Redesign**: Complete UI overhaul with modern glassmorphism design and CSS Grid layout
+- **📤 Modal Upload System**: Converted deck upload to prominent modal dialog
+- **♿ Enhanced UX**: Improved accessibility, visual hierarchy, and responsive design
 
 ### Technical Stack
 - **Frontend**: React with hooks, CSS Grid/Flexbox layouts
@@ -23,13 +26,14 @@ Polski Spark is a modern language learning application for Polish, built with Re
 
 ## Key Features Implemented
 
-### <� Learning Modes
+### 🎓 Learning Modes
 - **Study Mode**: Vocabulary-focused learning with filtered content (excludes grammar exercises)
 - **Quick Practice**: Configurable lesson mode with multiple question types
 - **Review Words**: Yesterday's vocabulary review with performance analytics
 - **Random Quiz**: Smart quiz from all learned words with difficulty filtering
 - **Grammar Lessons**: Interactive lessons explaining Polish grammar rules and concepts
-- **Grammar Practice**: Polish sentence structure, cases, and verb forms
+- **Grammar Practice**: Polish sentence structure, cases, and verb forms with unique question generation
+- **Listening Practice**: Audio comprehension exercises with Polish character normalization and multi-answer support
 - **Spaced Repetition**: Adaptive difficulty based on user performance
 
 ### =� User Management
@@ -60,6 +64,7 @@ Polski Spark is a modern language learning application for Polish, built with Re
   - `RandomQuiz.js` - Smart quiz generator
   - `GrammarLessons.js` - Interactive grammar lessons
   - `GrammarPractice.js` - Grammar exercises
+  - `ListeningPractice.js` - Audio comprehension practice
   - `DeckUpload.js` - File upload component
   - `ErrorBoundary.js` - Error handling
   - `LoadingSpinner.js` - Loading states
@@ -97,23 +102,34 @@ npm run build
 
 ## Recent Improvements
 
+### Latest Session Fixes (December 2024)
+- **Grammar Question Deduplication**: Fixed duplicate questions in grammar practice by implementing shuffled topic+rule combinations
+- **Polish Character Support**: Added comprehensive Polish diacritic normalization (ć→c, ł→l, ę→e, ą→a, ń→n, ó→o, ś→s, ź→z, ż→z) in listening practice
+- **Multiple Translation Support**: Enhanced translation validation to accept any valid answer from comma/semicolon-separated alternatives
+- **UI Optimization**: Reduced mode card heights to 85px with optimized typography for better proportions
+- **Navigation Enhancement**: Added back button to listening practice for proper dashboard navigation
+- **Word Order Bug Fix**: Fixed state persistence issue where words got stuck between questions
+
 ### UI/UX Enhancements
 - **Visual Hierarchy**: Clear information architecture with section headers
 - **Glassmorphism Design**: Backdrop blur effects and semi-transparent containers
-- **Color Accessibility**: Improved contrast with yellow accent colors
+- **Color Accessibility**: Improved contrast with yellow accent colors and fixed gray text readability
 - **Hover States**: Smooth animations and micro-interactions
+- **Responsive Design**: Optimized for all screen sizes with mobile-first approach
 
 ### Functional Improvements
 - **Study Mode Filtering**: Excludes confusing grammar exercises for vocabulary learning
 - **Modal Upload**: More visible and accessible deck upload system
 - **Responsive Grid**: CSS Grid layout that adapts to all screen sizes
 - **Progress Tracking**: Enhanced user progression with visual indicators
+- **Answer Tolerance**: Flexible answer checking supports multiple correct translations
 
 ### Technical Improvements
 - **Error Boundaries**: Comprehensive error handling throughout the app
 - **Loading States**: Skeleton placeholders and loading spinners
 - **Session Management**: Auto-save/restore with 24-hour expiration
 - **API Resilience**: Retry logic and connectivity checks
+- **Question Generation**: Unique question algorithms prevent repetition in grammar practice
 
 ## Network Configuration
 
@@ -190,5 +206,6 @@ The application runs on WSL2 and can be accessed from other devices:
 
 ---
 
-Last updated: Current session
+Last updated: December 2024
 Current branch: 003-add-the-progression
+Status: Active development with recent UI/UX improvements and bug fixes
